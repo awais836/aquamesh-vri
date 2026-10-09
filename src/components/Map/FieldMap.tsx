@@ -1,13 +1,7 @@
 import { useEffect, useRef } from 'react'
-import maplibregl from 'maplibre-gl'
+import * as maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
-// @ts-ignore
-import MapWorker from 'maplibre-gl/dist/maplibre-gl-csp-worker?worker'
 import type { FeatureCollection, Polygon } from 'geojson'
-
-// Configure Vite Web Worker for MapLibre
-// @ts-ignore
-maplibregl.workerClass = MapWorker
 
 const fieldZones: FeatureCollection<Polygon> = {
   type: 'FeatureCollection',
@@ -71,7 +65,29 @@ export function FieldMap() {
 
     const map = new maplibregl.Map({
       container: container.current,
-      style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+      style: {
+        version: 8,
+        sources: {
+          'carto-dark': {
+            type: 'raster',
+            tiles: [
+              'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+              'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+              'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+            ],
+            tileSize: 256,
+          },
+        },
+        layers: [
+          {
+            id: 'carto-dark-layer',
+            type: 'raster',
+            source: 'carto-dark',
+            minzoom: 0,
+            maxzoom: 20,
+          },
+        ],
+      },
       center: [-96.7015, 40.8155],
       zoom: 13.6,
       attributionControl: false,
