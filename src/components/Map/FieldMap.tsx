@@ -65,6 +65,8 @@ export function FieldMap() {
 
     const map = new maplibregl.Map({
       container: container.current,
+      center: [-96.702, 40.811],
+      zoom: 14.5,
       style: {
         version: 8,
         sources: {
@@ -87,7 +89,7 @@ export function FieldMap() {
             type: 'raster',
             source: 'esri-dark',
             minzoom: 0,
-            maxzoom: 16,
+            maxzoom: 18,
           },
           {
             id: 'zone-fill',
@@ -95,7 +97,7 @@ export function FieldMap() {
             source: 'vri-zones',
             paint: {
               'fill-color': ['get', 'color'],
-              'fill-opacity': 0.65,
+              'fill-opacity': 0.7,
             },
           },
           {
@@ -103,7 +105,7 @@ export function FieldMap() {
             type: 'line',
             source: 'vri-zones',
             paint: {
-              'line-color': '#e0f2fe',
+              'line-color': '#ffffff',
               'line-width': 2,
             },
           },
@@ -113,19 +115,6 @@ export function FieldMap() {
     })
 
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
-    map.addControl(new maplibregl.AttributionControl({ compact: true }))
-
-    // Automatically zoom and fit precisely to the field boundaries
-    map.on('load', () => {
-      map.resize()
-      map.fitBounds(
-        [
-          [-96.708, 40.803],
-          [-96.696, 40.819],
-        ],
-        { padding: 35, duration: 0 }
-      )
-    })
 
     return () => map.remove()
   }, [])
