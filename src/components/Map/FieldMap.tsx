@@ -18,7 +18,7 @@ export function FieldMap() {
     if (!container.current) return
     const map = new maplibregl.Map({
       container: container.current,
-      style: 'https://demotiles.maplibre.org/style.json',
+      style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
       center: [-96.7015, 40.8155],
       zoom: 13.6,
       attributionControl: false,
