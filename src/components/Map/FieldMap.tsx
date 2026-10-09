@@ -1,8 +1,21 @@
 import { useEffect, useRef } from 'react'
-// @ts-ignore
-import maplibregl from 'maplibre-gl/dist/maplibre-gl.js'
+import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import type { FeatureCollection, Polygon } from 'geojson'
+
+// Provide worker via blob loader to prevent Vite dev server worker crashes
+if (typeof window !== 'undefined' && maplibregl) {
+  try {
+    const workerBlob = new Blob(
+      ['importScripts("https://unpkg.com/maplibre-gl/dist/maplibre-gl-csp-worker.js");'],
+      { type: 'application/javascript' }
+    )
+    // @ts-ignore
+    maplibregl.workerUrl = URL.createObjectURL(workerBlob)
+  } catch (err) {
+    console.warn('Worker fallback initialized', err)
+  }
+}
 
 const fieldZones: FeatureCollection<Polygon> = {
   type: 'FeatureCollection',
@@ -67,7 +80,7 @@ export function FieldMap() {
     const map = new maplibregl.Map({
       container: container.current,
       center: [-96.702, 40.811],
-      zoom: 14.5,
+      zoom: 14.3,
       style: {
         version: 8,
         sources: {
@@ -98,7 +111,7 @@ export function FieldMap() {
             source: 'vri-zones',
             paint: {
               'fill-color': ['get', 'color'],
-              'fill-opacity': 0.7,
+              'fill-opacity': 0.65,
             },
           },
           {
@@ -116,6 +129,25 @@ export function FieldMap() {
     })
 
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
+
+    // Pin zone indicator badges directly over the field coordinates
+    const zoneLabels = [
+      { name: 'North Bench · 18 mm', color: '#10b981', coords: [-96.702, 40.815] as [number, number] },
+      { name: 'Central Loam · 22 mm', color: '#0ea5e9', coords: [-96.702, 40.811] as [number, number] },
+      { name: 'South Clay · 12 mm', color: '#f59e0b', coords: [-96.702, 40.807] as [number, number] },
+    ]
+
+    zoneLabels.forEach((label) => {
+      const el = document.createElement('div')
+      el.className = 'px-2.5 py-1 rounded text-xs font-semibold text-white shadow-lg pointer-events-none'
+      el.style.backgroundColor = label.color
+      el.style.border = '1px solid rgba(255, 255, 255, 0.4)'
+      el.innerText = label.name
+
+      new maplibregl.Marker({ element: el })
+        .setLngLat(label.coords)
+        .addTo(map)
+    })
 
     return () => map.remove()
   }, [])
