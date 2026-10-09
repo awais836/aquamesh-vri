@@ -68,56 +68,54 @@ export function FieldMap() {
       style: {
         version: 8,
         sources: {
-          'carto-dark': {
+          'esri-dark': {
             type: 'raster',
             tiles: [
-              'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-              'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-              'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+              'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
             ],
             tileSize: 256,
+            attribution: '&copy; Esri',
+          },
+          'vri-zones': {
+            type: 'geojson',
+            data: fieldZones,
           },
         },
         layers: [
           {
-            id: 'carto-dark-layer',
+            id: 'esri-dark-tiles',
             type: 'raster',
-            source: 'carto-dark',
+            source: 'esri-dark',
             minzoom: 0,
-            maxzoom: 20,
+            maxzoom: 16,
+          },
+          {
+            id: 'zone-fill',
+            type: 'fill',
+            source: 'vri-zones',
+            paint: {
+              'fill-color': ['get', 'color'],
+              'fill-opacity': 0.65,
+            },
+          },
+          {
+            id: 'zone-line',
+            type: 'line',
+            source: 'vri-zones',
+            paint: {
+              'line-color': '#e0f2fe',
+              'line-width': 2,
+            },
           },
         ],
       },
-      center: [-96.7015, 40.8155],
-      zoom: 13.6,
+      center: [-96.702, 40.811],
+      zoom: 14.2,
       attributionControl: false,
     })
 
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
     map.addControl(new maplibregl.AttributionControl({ compact: true }))
-
-    map.on('load', () => {
-      map.addSource('vri-zones', { type: 'geojson', data: fieldZones })
-      map.addLayer({
-        id: 'zone-fill',
-        type: 'fill',
-        source: 'vri-zones',
-        paint: { 'fill-color': ['get', 'color'], 'fill-opacity': 0.6 },
-      })
-      map.addLayer({
-        id: 'zone-line',
-        type: 'line',
-        source: 'vri-zones',
-        paint: { 'line-color': '#e0f2fe', 'line-width': 2 },
-      })
-      map.fitBounds(
-        [
-          [-96.708, 40.805],
-          [-96.695, 40.826],
-        ],
-        { padding: 42, duration: 0 }
-      )
-    })
 
     return () => map.remove()
   }, [])
