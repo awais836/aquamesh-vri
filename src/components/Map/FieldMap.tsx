@@ -1,75 +1,30 @@
 import { useEffect, useRef } from 'react'
-import maplibregl from 'maplibre-gl'
+import * as maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import type { FeatureCollection, Polygon } from 'geojson'
 
-// Provide worker via blob loader to prevent Vite dev server worker crashes
-if (typeof window !== 'undefined' && maplibregl) {
-  try {
-    const workerBlob = new Blob(
-      ['importScripts("https://unpkg.com/maplibre-gl/dist/maplibre-gl-csp-worker.js");'],
-      { type: 'application/javascript' }
-    )
-    // @ts-ignore
-    maplibregl.workerUrl = URL.createObjectURL(workerBlob)
-  } catch (err) {
-    console.warn('Worker fallback initialized', err)
-  }
-}
-
-const fieldZones: FeatureCollection<Polygon> = {
-  type: 'FeatureCollection',
-  features: [
-    {
-      type: 'Feature',
-      properties: { zone: 'North Bench', rate: 18, color: '#10b981' },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [
-          [
-            [-96.706, 40.817],
-            [-96.698, 40.817],
-            [-96.698, 40.813],
-            [-96.706, 40.813],
-            [-96.706, 40.817],
-          ],
-        ],
-      },
-    },
-    {
-      type: 'Feature',
-      properties: { zone: 'Central Loam', rate: 22, color: '#0ea5e9' },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [
-          [
-            [-96.706, 40.813],
-            [-96.698, 40.813],
-            [-96.698, 40.809],
-            [-96.706, 40.809],
-            [-96.706, 40.813],
-          ],
-        ],
-      },
-    },
-    {
-      type: 'Feature',
-      properties: { zone: 'South Clay', rate: 12, color: '#f59e0b' },
-      geometry: {
-        type: 'Polygon',
-        coordinates: [
-          [
-            [-96.706, 40.809],
-            [-96.698, 40.809],
-            [-96.698, 40.805],
-            [-96.706, 40.805],
-            [-96.706, 40.809],
-          ],
-        ],
-      },
-    },
-  ],
-}
+const zones = [
+  {
+    id: 'north-bench',
+    name: 'North Bench',
+    rate: '18 mm · Nominal',
+    color: '#10b981',
+    coords: [-96.702, 40.816] as [number, number],
+  },
+  {
+    id: 'central-loam',
+    name: 'Central Loam',
+    rate: '22 mm · Priority',
+    color: '#0ea5e9',
+    coords: [-96.702, 40.811] as [number, number],
+  },
+  {
+    id: 'south-clay',
+    name: 'South Clay',
+    rate: '12 mm · Restricted',
+    color: '#f59e0b',
+    coords: [-96.702, 40.806] as [number, number],
+  },
+]
 
 export function FieldMap() {
   const container = useRef<HTMLDivElement>(null)
@@ -80,7 +35,7 @@ export function FieldMap() {
     const map = new maplibregl.Map({
       container: container.current,
       center: [-96.702, 40.811],
-      zoom: 14.3,
+      zoom: 14.4,
       style: {
         version: 8,
         sources: {
@@ -92,10 +47,6 @@ export function FieldMap() {
             tileSize: 256,
             attribution: '&copy; Esri',
           },
-          'vri-zones': {
-            type: 'geojson',
-            data: fieldZones,
-          },
         },
         layers: [
           {
@@ -105,24 +56,6 @@ export function FieldMap() {
             minzoom: 0,
             maxzoom: 18,
           },
-          {
-            id: 'zone-fill',
-            type: 'fill',
-            source: 'vri-zones',
-            paint: {
-              'fill-color': ['get', 'color'],
-              'fill-opacity': 0.65,
-            },
-          },
-          {
-            id: 'zone-line',
-            type: 'line',
-            source: 'vri-zones',
-            paint: {
-              'line-color': '#ffffff',
-              'line-width': 2,
-            },
-          },
         ],
       },
       attributionControl: false,
@@ -130,26 +63,32 @@ export function FieldMap() {
 
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
 
-    // Pin zone indicator badges directly over the field coordinates
-    const zoneLabels = [
-      { name: 'North Bench · 18 mm', color: '#10b981', coords: [-96.702, 40.815] as [number, number] },
-      { name: 'Central Loam · 22 mm', color: '#0ea5e9', coords: [-96.702, 40.811] as [number, number] },
-      { name: 'South Clay · 12 mm', color: '#f59e0b', coords: [-96.702, 40.807] as [number, number] },
-    ]
-
-    zoneLabels.forEach((label) => {
+    // Render the three VRI management zones directly on the field
+    zones.forEach((zone) => {
       const el = document.createElement('div')
-      el.className = 'px-2.5 py-1 rounded text-xs font-semibold text-white shadow-lg pointer-events-none'
-      el.style.backgroundColor = label.color
-      el.style.border = '1px solid rgba(255, 255, 255, 0.4)'
-      el.innerText = label.name
+      el.className = 'rounded-lg p-3 shadow-2xl transition-transform hover:scale-105 select-none'
+      el.style.width = '260px'
+      el.style.backgroundColor = `${zone.color}25` // 15% opacity zone tint
+      el.style.border = `2px solid ${zone.color}`
+      el.style.backdropFilter = 'blur(4px)'
+      el.style.cursor = 'default'
 
-      new maplibregl.Marker({ element: el })
-        .setLngLat(label.coords)
+      el.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px;">
+          <span style="font-weight: 700; font-size: 12px; color: #ffffff; letter-spacing: 0.5px;">${zone.name}</span>
+          <span style="font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 4px; background-color: ${zone.color}; color: #ffffff;">${zone.rate}</span>
+        </div>
+        <div style="font-size: 10px; color: #94a3b8;">VRI Prescription Active</div>
+      `
+
+      new maplibregl.Marker({ element: el, anchor: 'center' })
+        .setLngLat(zone.coords)
         .addTo(map)
     })
 
-    return () => map.remove()
+    return () => {
+      map.remove()
+    }
   }, [])
 
   return (
