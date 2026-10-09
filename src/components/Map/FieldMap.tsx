@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
-import * as maplibregl from 'maplibre-gl'
+// @ts-ignore
+import maplibregl from 'maplibre-gl/dist/maplibre-gl.js'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import type { FeatureCollection, Polygon } from 'geojson'
 
