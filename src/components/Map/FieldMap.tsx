@@ -109,13 +109,23 @@ export function FieldMap() {
           },
         ],
       },
-      center: [-96.702, 40.811],
-      zoom: 14.2,
       attributionControl: false,
     })
 
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
     map.addControl(new maplibregl.AttributionControl({ compact: true }))
+
+    // Automatically zoom and fit precisely to the field boundaries
+    map.on('load', () => {
+      map.resize()
+      map.fitBounds(
+        [
+          [-96.708, 40.803],
+          [-96.696, 40.819],
+        ],
+        { padding: 35, duration: 0 }
+      )
+    })
 
     return () => map.remove()
   }, [])
